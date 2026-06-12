@@ -36,6 +36,24 @@ tray (look for the HideIt icon near the clock).
 > *"Windows protected your PC."* Click **More info → Run anyway**. See
 > [Trust & antivirus](#trust--antivirus) below.
 
+### Verify your download (optional but recommended)
+
+Each release ships a `SHA256SUMS.txt`. Compare its hash against your downloaded
+`HideIt.exe` to confirm the file wasn't tampered with in transit:
+
+```powershell
+# PowerShell — should match the value in SHA256SUMS.txt
+Get-FileHash .\HideIt.exe -Algorithm SHA256
+```
+
+```bash
+# Git Bash / Linux / macOS — run in the folder containing both files
+sha256sum -c SHA256SUMS.txt
+```
+
+If the hashes don't match, do not run the file — re-download it from the
+[Releases](../../releases) page.
+
 ### Usage
 
 1. **Double-click the tray icon** (or right-click → **Settings**).
