@@ -29,6 +29,23 @@
                 <Button Grid.Column="2" Content="Set…" Padding="8,2"
                         Command="{Binding SetPanicHotKeyCommand}" />
             </Grid>
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Show / hide HideIt shortcut:"
+                           VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{Binding AppToggleHotKeyText}"
+                           VerticalAlignment="Center" FontWeight="SemiBold" MinWidth="110" Margin="8,0" />
+                <Button Grid.Column="2" Content="Set…" Padding="8,2"
+                        Command="{Binding SetAppToggleHotKeyCommand}" />
+                <TextBlock Grid.Column="3" Margin="12,0,0,0" VerticalAlignment="Center"
+                           Foreground="Gray" FontSize="11" TextWrapping="Wrap"
+                           Text="Hides HideIt's own tray icon; press this shortcut to bring it back." />
+            </Grid>
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -81,16 +98,6 @@
                                         Command="{Binding DataContext.SetHotKeyCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                         CommandParameter="{Binding}" />
                             </StackPanel>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-
-                <DataGridTemplateColumn Header="Floating icon" Width="90">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <CheckBox IsChecked="{Binding ShowFloatingIcon, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                      HorizontalAlignment="Center"
-                                      VerticalAlignment="Center" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>

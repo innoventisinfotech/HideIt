@@ -12,16 +12,16 @@ First release.
   **taskbar**, and **Alt+Tab** on demand.
 - Per-app **global keyboard shortcuts**. The same shortcut can be assigned to
   several apps so they hide/show together (group toggle).
-- Optional per-app **floating icon button** — draggable, always-on-top, never
-  steals focus; left-click toggles that one app, right-click hides the button.
+- **Hide HideIt itself** — a tray command and a configurable global shortcut
+  (default `Ctrl+Alt+Shift+H`) hide HideIt's own tray icon, including from the
+  notification-area overflow. HideIt keeps running; the shortcut brings it back.
 - Settings window with a running-app picker (icons), Browse-for-`.exe`, shortcut
-  capture, remove, and per-row floating-icon toggle. Edits persist immediately.
+  capture, and remove. Edits persist immediately.
 - Tray menu: **Settings**, **Restore all hidden**, **Run at Windows startup**
   (HKCU Run key), **Exit**.
 - **Panic hotkey** (default `Ctrl+Alt+`` `) restores every hidden window —
   **configurable** in Settings.
 - **First-run onboarding** panel explaining the basics.
-- Floating icon on a **closed** app launches it (from its `.exe` path).
 - Tray **Check for updates** link to the GitHub releases page.
 - Config stored at `%AppData%\HideIt\config.json`.
 - Launch hardening: single-instance mutex, global crash logging to

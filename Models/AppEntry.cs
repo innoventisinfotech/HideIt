@@ -1,6 +1,6 @@
 namespace HideIt.Models;
 
-/// <summary>One configured app: how to match its process, its shortcut and icon prefs.</summary>
+/// <summary>One configured app: how to match its process and its shortcut.</summary>
 public sealed class AppEntry
 {
     public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -15,10 +15,4 @@ public sealed class AppEntry
 
     /// <summary>Assigned shortcut, or null when unassigned.</summary>
     public HotKeyCombo? HotKey { get; set; }
-
-    public bool ShowFloatingIcon { get; set; }
-
-    /// <summary>Last floating-icon position, in WPF device-independent units.</summary>
-    public double IconX { get; set; }
-    public double IconY { get; set; }
 }

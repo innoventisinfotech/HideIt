@@ -43,6 +43,7 @@ public partial class App : Application
             Logger.LogException("UnhandledException", args.ExceptionObject as Exception);
 
         _controller = new AppController();
+        _controller.ToggleAppVisibilityRequested += ToggleTrayVisibility;
         _controller.Load();
 
         BuildTray();
@@ -84,6 +85,10 @@ public partial class App : Application
         var restore = new WpfControls.MenuItem { Header = "Restore all hidden" };
         restore.Click += (_, _) => _controller!.ShowAllHidden();
         menu.Items.Add(restore);
+
+        var hideSelf = new WpfControls.MenuItem { Header = "Hide HideIt icon" };
+        hideSelf.Click += (_, _) => HideTrayFromMenu();
+        menu.Items.Add(hideSelf);
 
         _startupItem = new WpfControls.MenuItem
         {
@@ -138,6 +143,47 @@ public partial class App : Application
 
         if (_startupItem != null)
             _startupItem.IsChecked = _controller!.Startup.IsEnabled();
+    }
+
+    /// <summary>Toggle HideIt's own tray icon. Invoked by the global show/hide shortcut.</summary>
+    private void ToggleTrayVisibility()
+    {
+        if (_tray == null) return;
+        if (_tray.Visibility == Visibility.Visible)
+            HideTray();
+        else
+            ShowTray();
+    }
+
+    private void HideTray()
+    {
+        if (_tray == null) return;
+        _tray.Visibility = Visibility.Hidden;   // removes the icon from the tray + overflow
+        _mainWindow?.Hide();                     // also tuck away the settings window
+    }
+
+    private void ShowTray()
+    {
+        if (_tray == null) return;
+        _tray.Visibility = Visibility.Visible;
+        ShowSettings();                          // clear feedback that HideIt is back
+    }
+
+    private void HideTrayFromMenu()
+    {
+        // Refuse to hide if there's no working shortcut to bring HideIt back — otherwise
+        // the user could only recover via Task Manager.
+        if (!_controller!.AppToggleHotKeyWorks)
+        {
+            MessageBox.Show(
+                "Set a working \"Show / hide HideIt\" shortcut in Settings first.\n\n" +
+                "Without one, you couldn't bring HideIt back after hiding its icon " +
+                "(you'd have to end it from Task Manager).",
+                "HideIt", MessageBoxButton.OK, MessageBoxImage.Warning);
+            ShowSettings();
+            return;
+        }
+        HideTray();
     }
 
     private static void OpenUrl(string url)

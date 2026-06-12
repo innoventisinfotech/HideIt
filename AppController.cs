@@ -1,15 +1,13 @@
 using System.Diagnostics;
-using System.IO;
 using HideIt.Models;
 using HideIt.Services;
-using HideIt.Views;
 
 namespace HideIt;
 
 /// <summary>
-/// The brain: holds the live config and ties together hotkeys, the window hider and
-/// the floating icons. It never depends on the UI, so hotkeys and floating buttons keep
-/// working while the settings window is closed to tray.
+/// The brain: holds the live config and ties together hotkeys and the window hider.
+/// It never depends on the UI, so hotkeys keep working while the settings window is
+/// closed to tray (or while HideIt's own tray icon is hidden).
 /// </summary>
 public sealed class AppController : IDisposable
 {
@@ -21,10 +19,14 @@ public sealed class AppController : IDisposable
 
     public AppConfig Config { get; private set; } = new();
 
-    private readonly Dictionary<string, FloatingIconWindow> _floating = new();
-
     /// <summary>The configured panic combo (restores everything), or null if disabled.</summary>
     private HotKeyCombo? PanicCombo => Config.PanicHotKey;
+
+    /// <summary>The configured "show/hide HideIt" combo, or null if disabled.</summary>
+    private HotKeyCombo? AppToggleCombo => Config.AppToggleHotKey;
+
+    /// <summary>Combos that failed to register in the last Reapply (already owned globally).</summary>
+    private readonly HashSet<HotKeyCombo> _failedCombos = new();
 
     /// <summary>Raised (UI thread) when a hotkey couldn't be registered.</summary>
     public event Action<HotKeyCombo>? HotKeyRegistrationFailed;
@@ -32,10 +34,13 @@ public sealed class AppController : IDisposable
     /// <summary>Raised after config is saved + reapplied, so the UI can refresh.</summary>
     public event Action? ConfigChanged;
 
+    /// <summary>Raised (UI thread) when the user asks to show/hide HideIt's own tray icon.</summary>
+    public event Action? ToggleAppVisibilityRequested;
+
     public AppController()
     {
         HotKeys.Pressed += OnHotKeyPressed;
-        HotKeys.RegistrationFailed += c => HotKeyRegistrationFailed?.Invoke(c);
+        HotKeys.RegistrationFailed += OnRegistrationFailed;
     }
 
     public void Load()
@@ -46,7 +51,7 @@ public sealed class AppController : IDisposable
 
     public void Save() => ConfigStore.Save(Config);
 
-    /// <summary>Persist, then re-register hotkeys and reconcile floating icons.</summary>
+    /// <summary>Persist, then re-register hotkeys.</summary>
     public void SaveAndReapply()
     {
         Save();
@@ -56,27 +61,49 @@ public sealed class AppController : IDisposable
 
     private void Reapply()
     {
+        _failedCombos.Clear();
         var combos = Config.Apps
             .Where(a => a.HotKey != null)
             .Select(a => a.HotKey!);
         if (PanicCombo != null)
             combos = combos.Append(PanicCombo);
+        if (AppToggleCombo != null)
+            combos = combos.Append(AppToggleCombo);
         HotKeys.RegisterAll(combos);
-        ReconcileFloatingIcons();
     }
+
+    private void OnRegistrationFailed(HotKeyCombo combo)
+    {
+        _failedCombos.Add(combo);
+        HotKeyRegistrationFailed?.Invoke(combo);
+    }
+
+    /// <summary>True if the app-toggle shortcut is set and registered successfully.</summary>
+    public bool AppToggleHotKeyWorks =>
+        AppToggleCombo != null && !_failedCombos.Contains(AppToggleCombo);
 
     // ---- Hotkey handling ----
     private void OnHotKeyPressed(HotKeyCombo combo)
     {
-        // The panic combo restores everything — unless the user also assigned it to an app,
-        // in which case it behaves like a normal group toggle.
-        if (PanicCombo != null && combo.Equals(PanicCombo) && !Config.Apps.Any(a => combo.Equals(a.HotKey)))
+        // Show/hide HideIt itself — unless the user also assigned it to an app.
+        if (AppToggleCombo != null && combo.Equals(AppToggleCombo) && !IsAssignedToApp(combo))
+        {
+            ToggleAppVisibilityRequested?.Invoke();
+            return;
+        }
+
+        // The panic combo restores everything — unless also assigned to an app.
+        if (PanicCombo != null && combo.Equals(PanicCombo) && !IsAssignedToApp(combo))
         {
             Hider.ShowAll();
             return;
         }
+
         ToggleGroup(combo);
     }
+
+    private bool IsAssignedToApp(HotKeyCombo combo) =>
+        Config.Apps.Any(a => combo.Equals(a.HotKey));
 
     /// <summary>§6.1 group toggle: if every running member is hidden, show all; else hide all.</summary>
     public void ToggleGroup(HotKeyCombo combo)
@@ -94,38 +121,7 @@ public sealed class AppController : IDisposable
         }
     }
 
-    public void ToggleSingle(AppEntry entry)
-    {
-        // If it isn't running, a click on the floating icon launches it instead.
-        if (!IsRunning(entry.ProcessName))
-        {
-            TryLaunch(entry);
-            return;
-        }
-        Hider.Toggle(entry.ProcessName);
-    }
-
-    private static void TryLaunch(AppEntry entry)
-    {
-        if (string.IsNullOrEmpty(entry.ExePath) || !File.Exists(entry.ExePath)) return;
-        try
-        {
-            Process.Start(new ProcessStartInfo(entry.ExePath) { UseShellExecute = true });
-        }
-        catch (Exception ex)
-        {
-            Logger.LogException($"Launch {entry.ExePath}", ex);
-        }
-    }
-
     public void ShowAllHidden() => Hider.ShowAll();
-
-    /// <summary>Update the panic shortcut (null disables it) and re-register.</summary>
-    public void SetPanicHotKey(HotKeyCombo? combo)
-    {
-        Config.PanicHotKey = combo;
-        SaveAndReapply();
-    }
 
     private static bool IsRunning(string processName)
     {
@@ -135,56 +131,22 @@ public sealed class AppController : IDisposable
         return any;
     }
 
-    // ---- Floating icons ----
-    public void ReconcileFloatingIcons()
+    /// <summary>Update the panic shortcut (null disables it) and re-register.</summary>
+    public void SetPanicHotKey(HotKeyCombo? combo)
     {
-        var wanted = Config.Apps
-            .Where(a => a.ShowFloatingIcon)
-            .ToDictionary(a => a.Id);
-
-        // Close windows that are no longer wanted.
-        foreach (var id in _floating.Keys.ToList())
-        {
-            if (!wanted.ContainsKey(id))
-            {
-                _floating[id].ForceClose();
-                _floating.Remove(id);
-            }
-        }
-
-        // Open windows that are newly wanted; refresh existing ones.
-        foreach (var (id, entry) in wanted)
-        {
-            if (_floating.TryGetValue(id, out var existing))
-            {
-                existing.UpdateEntry(entry);
-            }
-            else
-            {
-                var win = new FloatingIconWindow(entry, this);
-                _floating[id] = win;
-                win.Show();
-            }
-        }
+        Config.PanicHotKey = combo;
+        SaveAndReapply();
     }
 
-    public void PersistIconPosition(AppEntry entry, double x, double y)
+    /// <summary>Update the show/hide-HideIt shortcut (null disables it) and re-register.</summary>
+    public void SetAppToggleHotKey(HotKeyCombo? combo)
     {
-        entry.IconX = x;
-        entry.IconY = y;
-        Save();
-    }
-
-    public void DisableFloatingIcon(AppEntry entry)
-    {
-        entry.ShowFloatingIcon = false;
+        Config.AppToggleHotKey = combo;
         SaveAndReapply();
     }
 
     public void Dispose()
     {
-        foreach (var w in _floating.Values) w.ForceClose();
-        _floating.Clear();
         HotKeys.Dispose();
         Hider.ShowAll(); // never leave a window invisible on exit
     }

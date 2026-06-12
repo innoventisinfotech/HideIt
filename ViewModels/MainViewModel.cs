@@ -11,7 +11,6 @@ namespace HideIt.ViewModels;
 public partial class MainViewModel : ObservableObject
 {
     private readonly AppController _controller;
-    private bool _reloading;
 
     public ObservableCollection<AppEntryVm> Apps { get; } = new();
 
@@ -39,20 +38,12 @@ public partial class MainViewModel : ObservableObject
 
     private void ReloadApps()
     {
-        _reloading = true;
         Apps.Clear();
         foreach (var entry in _controller.Config.Apps)
         {
             var icon = _controller.Catalog.GetIconFor(entry.ExePath);
-            Apps.Add(new AppEntryVm(entry, icon, OnEntryChanged));
+            Apps.Add(new AppEntryVm(entry, icon));
         }
-        _reloading = false;
-    }
-
-    private void OnEntryChanged()
-    {
-        if (_reloading) return;
-        _controller.SaveAndReapply();
     }
 
     partial void OnRunAtStartupChanged(bool value)
@@ -65,8 +56,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void AddApp()
     {
-        var owner = OwnerWindow();
-        var dlg = new AddAppDialog(_controller.Catalog) { Owner = owner };
+        var dlg = new AddAppDialog(_controller.Catalog) { Owner = OwnerWindow() };
         if (dlg.ShowDialog() == true && dlg.Result != null)
         {
             _controller.Config.Apps.Add(dlg.Result);
@@ -99,6 +89,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void RestoreAll() => _controller.ShowAllHidden();
 
+    // ---- Panic shortcut ----
     public string PanicHotKeyText => _controller.Config.PanicHotKey?.Display() ?? "(none)";
 
     [RelayCommand]
@@ -109,6 +100,21 @@ public partial class MainViewModel : ObservableObject
         {
             _controller.SetPanicHotKey(dlg.Result); // null clears it
             OnPropertyChanged(nameof(PanicHotKeyText));
+            StatusMessage = null;
+        }
+    }
+
+    // ---- Show/hide HideIt itself ----
+    public string AppToggleHotKeyText => _controller.Config.AppToggleHotKey?.Display() ?? "(none)";
+
+    [RelayCommand]
+    private void SetAppToggleHotKey()
+    {
+        var dlg = new HotKeyCaptureDialog { Owner = OwnerWindow() };
+        if (dlg.ShowDialog() == true)
+        {
+            _controller.SetAppToggleHotKey(dlg.Result); // null clears it
+            OnPropertyChanged(nameof(AppToggleHotKeyText));
             StatusMessage = null;
         }
     }

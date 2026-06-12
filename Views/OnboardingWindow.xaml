@@ -28,9 +28,9 @@
             <TextBlock TextWrapping="Wrap" Margin="0,0,0,6"
                        Text="3.  Click &quot;Set…&quot; to record a shortcut (use at least one of Ctrl / Alt / Shift / Win)." />
             <TextBlock TextWrapping="Wrap" Margin="0,0,0,6"
-                       Text="4.  Optionally tick &quot;Floating icon&quot; to get a small on-screen button for that app." />
+                       Text="4.  Press your shortcut to hide / show. Give two apps the same shortcut and one press toggles both." />
             <TextBlock TextWrapping="Wrap" Margin="0,0,0,6"
-                       Text="5.  Press your shortcut (or click the floating button) to hide / show." />
+                       Text="5.  You can also hide HideIt's own tray icon (Ctrl+Alt+Shift+H by default) — press it again to bring HideIt back." />
 
             <Border Background="#FFFFF4CE" BorderBrush="#FFE6C200" BorderThickness="1"
                     CornerRadius="4" Padding="10" Margin="0,14,0,0">

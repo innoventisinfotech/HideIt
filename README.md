@@ -14,12 +14,12 @@ shortcut — then bring them back the same way. A lightweight Windows tray utili
   taskbar, and Alt+Tab, and come back focused.
 - **Shared shortcuts** — give two or more apps the *same* shortcut and one press
   hides/shows them all together.
-- **Floating icon** — optionally show a small, draggable, always-on-top button per
-  app. Click it to toggle just that app; it never steals focus from your game/app.
+- **Hide HideIt itself** — a tray command and a global shortcut (default
+  `Ctrl+Alt+Shift+H`, configurable) hide HideIt's own tray icon, including from the
+  "show hidden icons" overflow. HideIt keeps running; press the shortcut again to
+  bring it back.
 - **Restore all** — a tray command and a **panic hotkey** (default `Ctrl+Alt+`` `,
   configurable in Settings) un-hide everything. Windows are always restored on exit.
-- **Launch on click** — if you click a floating icon for an app that isn't running,
-  HideIt launches it from its `.exe`.
 - **Run at Windows startup** — optional, via the per-user registry Run key.
 - **Runs in the tray** — no taskbar clutter; settings live behind the tray icon. A
   first-run welcome panel walks you through the basics.
@@ -59,8 +59,9 @@ If the hashes don't match, do not run the file — re-download it from the
 1. **Double-click the tray icon** (or right-click → **Settings**).
 2. **Add app…** → pick a running app or **Browse for .exe**.
 3. Click **Set…** to record a shortcut (needs at least one of Ctrl/Alt/Shift/Win).
-4. Optionally tick **Floating icon** for that app.
-5. Press your shortcut (or click the floating button) to hide/show.
+4. Press your shortcut to hide/show. Give two apps the same shortcut to toggle both.
+5. Optionally hide HideIt's own tray icon (tray → **Hide HideIt icon**, or the
+   show/hide shortcut). Press the shortcut again to bring it back.
 
 Config is saved to `%AppData%\HideIt\config.json`. Logs (if any) go to
 `%AppData%\HideIt\logs`.
