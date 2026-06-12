@@ -1,0 +1,113 @@
+<Window x:Class="HideIt.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="HideIt — Settings"
+        Width="720" Height="480"
+        WindowStartupLocation="CenterScreen"
+        MinWidth="560" MinHeight="320">
+    <DockPanel Margin="12">
+
+        <!-- Top toolbar -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,10">
+            <Button Content="Add app…" Padding="12,5" Command="{Binding AddAppCommand}" />
+            <Button Content="Restore all hidden" Padding="12,5" Margin="8,0,0,0" Command="{Binding RestoreAllCommand}" />
+        </StackPanel>
+
+        <!-- Bottom bar -->
+        <StackPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Panic shortcut (restore all hidden):"
+                           VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{Binding PanicHotKeyText}"
+                           VerticalAlignment="Center" FontWeight="SemiBold" MinWidth="110" Margin="8,0" />
+                <Button Grid.Column="2" Content="Set…" Padding="8,2"
+                        Command="{Binding SetPanicHotKeyCommand}" />
+            </Grid>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0"
+                           Text="{Binding StatusMessage}"
+                           Foreground="#FFB00000"
+                           VerticalAlignment="Center"
+                           TextWrapping="Wrap" />
+                <CheckBox Grid.Column="1"
+                          Content="Run at Windows startup"
+                          VerticalAlignment="Center"
+                          IsChecked="{Binding RunAtStartup, Mode=TwoWay}" />
+            </Grid>
+        </StackPanel>
+
+        <!-- App list -->
+        <DataGrid x:Name="Grid"
+                  ItemsSource="{Binding Apps}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  HeadersVisibility="Column"
+                  GridLinesVisibility="Horizontal"
+                  RowHeight="40"
+                  SelectionMode="Single">
+            <DataGrid.Columns>
+
+                <DataGridTemplateColumn Header="" Width="44" IsReadOnly="True">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Image Source="{Binding Icon}" Width="24" Height="24" Margin="6,0" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTextColumn Header="App" Binding="{Binding DisplayName}" Width="*" IsReadOnly="True" />
+
+                <DataGridTemplateColumn Header="Shortcut" Width="220" IsReadOnly="True">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding ShortcutText}"
+                                           VerticalAlignment="Center"
+                                           MinWidth="110"
+                                           Margin="6,0" />
+                                <Button Content="Set…"
+                                        Padding="8,2"
+                                        Command="{Binding DataContext.SetHotKeyCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTemplateColumn Header="Floating icon" Width="90">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <CheckBox IsChecked="{Binding ShowFloatingIcon, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTemplateColumn Header="" Width="80" IsReadOnly="True">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="Remove"
+                                    Padding="8,2"
+                                    Margin="4,0"
+                                    Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    CommandParameter="{Binding}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>

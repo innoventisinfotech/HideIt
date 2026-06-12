@@ -1,0 +1,47 @@
+<Window x:Class="HideIt.Views.OnboardingWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Welcome to HideIt"
+        Width="520" Height="460"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        ShowInTaskbar="True">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Welcome to HideIt"
+                   FontSize="22" FontWeight="Bold" />
+        <TextBlock Grid.Row="1" Margin="0,4,0,16" TextWrapping="Wrap" Foreground="#FF555555"
+                   Text="Hide apps from the screen, the taskbar and Alt+Tab with a global shortcut — then bring them back the same way. HideIt lives in your system tray." />
+
+        <StackPanel Grid.Row="2">
+            <TextBlock Text="Getting started" FontWeight="SemiBold" Margin="0,0,0,8" />
+            <TextBlock TextWrapping="Wrap" Margin="0,0,0,6"
+                       Text="1.  Open Settings from the tray icon (double-click it, or right-click → Settings)." />
+            <TextBlock TextWrapping="Wrap" Margin="0,0,0,6"
+                       Text="2.  Click &quot;Add app…&quot; and pick a running app, or browse to an .exe." />
+            <TextBlock TextWrapping="Wrap" Margin="0,0,0,6"
+                       Text="3.  Click &quot;Set…&quot; to record a shortcut (use at least one of Ctrl / Alt / Shift / Win)." />
+            <TextBlock TextWrapping="Wrap" Margin="0,0,0,6"
+                       Text="4.  Optionally tick &quot;Floating icon&quot; to get a small on-screen button for that app." />
+            <TextBlock TextWrapping="Wrap" Margin="0,0,0,6"
+                       Text="5.  Press your shortcut (or click the floating button) to hide / show." />
+
+            <Border Background="#FFFFF4CE" BorderBrush="#FFE6C200" BorderThickness="1"
+                    CornerRadius="4" Padding="10" Margin="0,14,0,0">
+                <TextBlock TextWrapping="Wrap" Foreground="#FF6B5400"
+                           Text="Tip: For games, use borderless-windowed mode — fullscreen-exclusive games may not hide cleanly. Press Ctrl+Alt+`  any time to restore every hidden window." />
+            </Border>
+        </StackPanel>
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+            <Button Content="Open Settings" Width="130" Margin="0,0,8,0" Click="OpenSettings_Click" />
+            <Button Content="Got it" Width="90" IsDefault="True" Click="Close_Click" />
+        </StackPanel>
+    </Grid>
+</Window>
