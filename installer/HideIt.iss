@@ -8,7 +8,7 @@
 #define MyAppVersion "1.0.0"
 #define MyAppPublisher "HideIt"
 #define MyAppExeName "HideIt.exe"
-#define MyAppUrl "https://github.com/OWNER/HideIt"
+#define MyAppUrl "https://github.com/innoventisinfotech/HideIt"
 
 [Setup]
 ; A stable, unique GUID for this product (keep it constant across versions).
