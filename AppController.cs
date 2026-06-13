@@ -59,7 +59,16 @@ public sealed class AppController : IDisposable
     public void Load()
     {
         Config = ConfigStore.Load();
+        Hider.SetMuteWhileHidden(Config.MuteWhileHidden);
         Reapply();
+    }
+
+    /// <summary>Toggle "mute audio while hidden" and apply it to anything already hidden.</summary>
+    public void SetMuteWhileHidden(bool on)
+    {
+        Config.MuteWhileHidden = on;
+        Hider.SetMuteWhileHidden(on);
+        Save();
     }
 
     public void Save() => ConfigStore.Save(Config);

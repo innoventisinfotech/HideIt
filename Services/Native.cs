@@ -128,6 +128,12 @@ internal static class Native
         return result;
     }
 
+    public static uint GetWindowPid(IntPtr hWnd)
+    {
+        GetWindowThreadProcessId(hWnd, out uint pid);
+        return pid;
+    }
+
     public static string GetWindowTitle(IntPtr hWnd)
     {
         int len = GetWindowTextLength(hWnd);

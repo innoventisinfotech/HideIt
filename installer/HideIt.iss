@@ -5,7 +5,7 @@
 ;     -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
 
 #define MyAppName "HideIt"
-#define MyAppVersion "1.0.2"
+#define MyAppVersion "1.1.0"
 #define MyAppPublisher "HideIt"
 #define MyAppExeName "HideIt.exe"
 #define MyAppUrl "https://github.com/innoventisinfotech/HideIt"

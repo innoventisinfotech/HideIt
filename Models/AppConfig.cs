@@ -25,6 +25,9 @@ public sealed class AppConfig
     /// </summary>
     public HotKeyCombo? ShowLastHotKey { get; set; } = new(Mod.Ctrl | Mod.Alt | Mod.Shift, 0x53);
 
+    /// <summary>Mute a hidden app's audio while it's hidden (unmuted on restore). Default on.</summary>
+    public bool MuteWhileHidden { get; set; } = true;
+
     /// <summary>False until the one-time onboarding panel has been shown.</summary>
     public bool FirstRunComplete { get; set; }
 }

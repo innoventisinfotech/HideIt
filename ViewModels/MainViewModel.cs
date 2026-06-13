@@ -19,12 +19,16 @@ public partial class MainViewModel : ObservableObject
     private bool _runAtStartup;
 
     [ObservableProperty]
+    private bool _muteWhileHidden;
+
+    [ObservableProperty]
     private string? _statusMessage;
 
     public MainViewModel(AppController controller)
     {
         _controller = controller;
         _runAtStartup = controller.Startup.IsEnabled();
+        _muteWhileHidden = controller.Config.MuteWhileHidden;
         controller.HotKeyRegistrationFailed += OnHotKeyFailed;
         controller.ConfigChanged += OnConfigChanged;
         ReloadApps();
@@ -53,6 +57,8 @@ public partial class MainViewModel : ObservableObject
         _controller.Config.RunAtStartup = value;
         _controller.Save();
     }
+
+    partial void OnMuteWhileHiddenChanged(bool value) => _controller.SetMuteWhileHidden(value);
 
     [RelayCommand]
     private void AddApp()

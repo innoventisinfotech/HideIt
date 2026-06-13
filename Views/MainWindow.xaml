@@ -79,10 +79,15 @@
                            Foreground="#FFB00000"
                            VerticalAlignment="Center"
                            TextWrapping="Wrap" />
-                <CheckBox Grid.Column="1"
-                          Content="Run at Windows startup"
-                          VerticalAlignment="Center"
-                          IsChecked="{Binding RunAtStartup, Mode=TwoWay}" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <CheckBox Content="Mute audio while hidden"
+                              VerticalAlignment="Center"
+                              Margin="0,0,16,0"
+                              IsChecked="{Binding MuteWhileHidden, Mode=TwoWay}" />
+                    <CheckBox Content="Run at Windows startup"
+                              VerticalAlignment="Center"
+                              IsChecked="{Binding RunAtStartup, Mode=TwoWay}" />
+                </StackPanel>
             </Grid>
         </StackPanel>
 

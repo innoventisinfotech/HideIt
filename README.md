@@ -25,6 +25,8 @@ shortcut — then bring them back the same way. A lightweight Windows tray utili
   **assign a temporary shortcut** to specific windows so a keypress toggles exactly
   those — no need to open HideIt. **Show last hidden** (default `Ctrl+Alt+Shift+S`)
   or Restore all bring them back.
+- **Mute audio while hidden** — optional (on by default): a hidden app's sound is
+  muted and restored when you bring it back, so hidden media goes quiet.
 - **Run at Windows startup** — optional, via the per-user registry Run key.
 - **Desktop / Start Menu shortcuts** — create them on demand from the tray
   ("Create shortcut") or Settings (handy for the portable `.exe`).

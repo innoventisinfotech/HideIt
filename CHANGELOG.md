@@ -3,7 +3,12 @@
 All notable changes to HideIt are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
-## [1.0.2] - 2026-06-13
+## [1.1.0] - 2026-06-13
+
+### Added
+- **Mute audio while hidden** (global toggle in Settings, default on) — when an app
+  or window is hidden, its audio session is muted, and unmuted again when restored.
+  Only sessions HideIt muted are unmuted, so manual mutes are left alone.
 
 ### Fixed
 - **Launching HideIt now opens the Settings window** instead of starting silently
