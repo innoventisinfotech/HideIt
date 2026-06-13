@@ -1,8 +1,12 @@
 using System.Diagnostics;
+using System.Windows.Media;
 using HideIt.Models;
 using HideIt.Services;
 
 namespace HideIt;
+
+/// <summary>One open window offered in the "hide a specific window" picker.</summary>
+public sealed record OpenWindow(IntPtr Hwnd, string Title, string ProcessName, ImageSource? Icon);
 
 /// <summary>
 /// The brain: holds the live config and ties together hotkeys and the window hider.
@@ -24,6 +28,9 @@ public sealed class AppController : IDisposable
 
     /// <summary>The configured "show/hide HideIt" combo, or null if disabled.</summary>
     private HotKeyCombo? AppToggleCombo => Config.AppToggleHotKey;
+
+    /// <summary>The configured "show last hidden window" combo, or null if disabled.</summary>
+    private HotKeyCombo? ShowLastCombo => Config.ShowLastHotKey;
 
     /// <summary>Combos that failed to register in the last Reapply (already owned globally).</summary>
     private readonly HashSet<HotKeyCombo> _failedCombos = new();
@@ -69,6 +76,8 @@ public sealed class AppController : IDisposable
             combos = combos.Append(PanicCombo);
         if (AppToggleCombo != null)
             combos = combos.Append(AppToggleCombo);
+        if (ShowLastCombo != null)
+            combos = combos.Append(ShowLastCombo);
         HotKeys.RegisterAll(combos);
     }
 
@@ -89,6 +98,13 @@ public sealed class AppController : IDisposable
         if (AppToggleCombo != null && combo.Equals(AppToggleCombo) && !IsAssignedToApp(combo))
         {
             ToggleAppVisibilityRequested?.Invoke();
+            return;
+        }
+
+        // Show the most recently individually-hidden window — unless assigned to an app.
+        if (ShowLastCombo != null && combo.Equals(ShowLastCombo) && !IsAssignedToApp(combo))
+        {
+            Hider.ShowLastWindow();
             return;
         }
 
@@ -143,6 +159,52 @@ public sealed class AppController : IDisposable
     {
         Config.AppToggleHotKey = combo;
         SaveAndReapply();
+    }
+
+    /// <summary>Update the "show last hidden window" shortcut (null disables it) and re-register.</summary>
+    public void SetShowLastHotKey(HotKeyCombo? combo)
+    {
+        Config.ShowLastHotKey = combo;
+        SaveAndReapply();
+    }
+
+    // ---- Hide a specific window (the picker) ----
+
+    /// <summary>All open "real" windows except HideIt's own, for the window picker.</summary>
+    public List<OpenWindow> GetOpenWindows()
+    {
+        uint selfPid = (uint)Environment.ProcessId;
+        var list = new List<OpenWindow>();
+
+        foreach (var w in Native.GetAllRealWindows())
+        {
+            if (w.Pid == selfPid) continue;
+
+            string procName = "";
+            string? exe = null;
+            try
+            {
+                using var p = Process.GetProcessById((int)w.Pid);
+                procName = p.ProcessName;
+                try { exe = p.MainModule?.FileName; } catch { /* denied / bitness */ }
+            }
+            catch { /* process vanished */ }
+
+            var title = string.IsNullOrWhiteSpace(w.Title) ? procName : w.Title;
+            list.Add(new OpenWindow(w.Hwnd, title, procName, Catalog.GetIconFor(exe)));
+        }
+
+        return list
+            .OrderBy(x => x.ProcessName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(x => x.Title, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    /// <summary>Hide the given specific windows by handle.</summary>
+    public void HideSpecificWindows(IEnumerable<IntPtr> handles)
+    {
+        foreach (var h in handles)
+            Hider.HideWindow(h);
     }
 
     public void Dispose()

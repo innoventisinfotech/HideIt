@@ -19,6 +19,12 @@ public sealed class AppConfig
     /// </summary>
     public HotKeyCombo? AppToggleHotKey { get; set; } = new(Mod.Ctrl | Mod.Alt | Mod.Shift, 0x48);
 
+    /// <summary>
+    /// Restores the most recently individually-hidden window (from the window picker).
+    /// Defaults to Ctrl+Alt+Shift+S (VK 0x53). Null disables it.
+    /// </summary>
+    public HotKeyCombo? ShowLastHotKey { get; set; } = new(Mod.Ctrl | Mod.Alt | Mod.Shift, 0x53);
+
     /// <summary>False until the one-time onboarding panel has been shown.</summary>
     public bool FirstRunComplete { get; set; }
 }

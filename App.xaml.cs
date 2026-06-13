@@ -82,6 +82,10 @@ public partial class App : Application
         settings.Click += (_, _) => ShowSettings();
         menu.Items.Add(settings);
 
+        var hideWindow = new WpfControls.MenuItem { Header = "Hide a window…" };
+        hideWindow.Click += (_, _) => OpenHideWindowPicker();
+        menu.Items.Add(hideWindow);
+
         var restore = new WpfControls.MenuItem { Header = "Restore all hidden" };
         restore.Click += (_, _) => _controller!.ShowAllHidden();
         menu.Items.Add(restore);
@@ -143,6 +147,15 @@ public partial class App : Application
 
         if (_startupItem != null)
             _startupItem.IsChecked = _controller!.Startup.IsEnabled();
+    }
+
+    private void OpenHideWindowPicker()
+    {
+        var dlg = new HideWindowDialog(_controller!);
+        if (_mainWindow is { IsVisible: true })
+            dlg.Owner = _mainWindow;
+        if (dlg.ShowDialog() == true)
+            _controller!.HideSpecificWindows(dlg.Result);
     }
 
     /// <summary>Toggle HideIt's own tray icon. Invoked by the global show/hide shortcut.</summary>

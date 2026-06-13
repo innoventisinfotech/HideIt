@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace HideIt.Services;
 
@@ -67,6 +68,9 @@ internal static class Native
     [DllImport("user32.dll")]
     public static extern int GetWindowTextLength(IntPtr hWnd);
 
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
+
     [DllImport("dwmapi.dll")]
     public static extern int DwmGetWindowAttribute(IntPtr hWnd, int dwAttribute, out int pvAttribute, int cbAttribute);
 
@@ -117,6 +121,34 @@ internal static class Native
             return true;
         }, IntPtr.Zero);
 
+        return result;
+    }
+
+    public static string GetWindowTitle(IntPtr hWnd)
+    {
+        int len = GetWindowTextLength(hWnd);
+        if (len == 0) return "";
+        var sb = new StringBuilder(len + 1);
+        GetWindowText(hWnd, sb, sb.Capacity);
+        return sb.ToString();
+    }
+
+    /// <summary>A single real top-level window: its handle, title and owning process id.</summary>
+    public readonly record struct WindowInfo(IntPtr Hwnd, string Title, uint Pid);
+
+    /// <summary>Every "real" (Alt+Tab-able) top-level window across all processes.</summary>
+    public static List<WindowInfo> GetAllRealWindows()
+    {
+        var result = new List<WindowInfo>();
+        EnumWindows((hWnd, _) =>
+        {
+            if (IsRealAppWindow(hWnd))
+            {
+                GetWindowThreadProcessId(hWnd, out uint pid);
+                result.Add(new WindowInfo(hWnd, GetWindowTitle(hWnd), pid));
+            }
+            return true;
+        }, IntPtr.Zero);
         return result;
     }
 

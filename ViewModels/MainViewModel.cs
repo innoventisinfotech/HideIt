@@ -89,6 +89,14 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void RestoreAll() => _controller.ShowAllHidden();
 
+    [RelayCommand]
+    private void HideWindow()
+    {
+        var dlg = new HideWindowDialog(_controller) { Owner = OwnerWindow() };
+        if (dlg.ShowDialog() == true)
+            _controller.HideSpecificWindows(dlg.Result);
+    }
+
     // ---- Panic shortcut ----
     public string PanicHotKeyText => _controller.Config.PanicHotKey?.Display() ?? "(none)";
 
@@ -115,6 +123,21 @@ public partial class MainViewModel : ObservableObject
         {
             _controller.SetAppToggleHotKey(dlg.Result); // null clears it
             OnPropertyChanged(nameof(AppToggleHotKeyText));
+            StatusMessage = null;
+        }
+    }
+
+    // ---- Show last hidden window ----
+    public string ShowLastHotKeyText => _controller.Config.ShowLastHotKey?.Display() ?? "(none)";
+
+    [RelayCommand]
+    private void SetShowLastHotKey()
+    {
+        var dlg = new HotKeyCaptureDialog { Owner = OwnerWindow() };
+        if (dlg.ShowDialog() == true)
+        {
+            _controller.SetShowLastHotKey(dlg.Result); // null clears it
+            OnPropertyChanged(nameof(ShowLastHotKeyText));
             StatusMessage = null;
         }
     }

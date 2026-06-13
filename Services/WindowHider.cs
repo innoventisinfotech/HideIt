@@ -12,8 +12,34 @@ public sealed class WindowHider
     private readonly Dictionary<string, List<HiddenWin>> _hidden =
         new(StringComparer.OrdinalIgnoreCase);
 
+    // Individually-hidden windows (the "hide one specific window" feature), newest last.
+    private readonly List<HiddenWin> _individual = new();
+
     public bool IsHidden(string processName) =>
         _hidden.TryGetValue(processName, out var list) && list.Count > 0;
+
+    public bool HasIndividuallyHidden => _individual.Count > 0;
+
+    /// <summary>Hide one specific window by handle (used by the window picker).</summary>
+    public void HideWindow(IntPtr hwnd)
+    {
+        if (_individual.Any(h => h.Hwnd == hwnd)) return;
+        long ex = Native.GetExStyle(hwnd);
+        Native.SetExStyle(hwnd, (ex | Native.WS_EX_TOOLWINDOW) & ~Native.WS_EX_APPWINDOW);
+        Native.ShowWindow(hwnd, Native.SW_HIDE);
+        _individual.Add(new HiddenWin(hwnd, ex));
+    }
+
+    /// <summary>Restore the most recently individually-hidden window and focus it.</summary>
+    public void ShowLastWindow()
+    {
+        if (_individual.Count == 0) return;
+        var h = _individual[^1];
+        _individual.RemoveAt(_individual.Count - 1);
+        Native.SetExStyle(h.Hwnd, h.OriginalExStyle);
+        Native.ShowWindow(h.Hwnd, Native.SW_SHOW);
+        Native.SetForegroundWindow(h.Hwnd);
+    }
 
     public void Hide(string processName)
     {
@@ -59,5 +85,12 @@ public sealed class WindowHider
     {
         foreach (var key in _hidden.Keys.ToList())
             Show(key);
+
+        foreach (var h in _individual)
+        {
+            Native.SetExStyle(h.Hwnd, h.OriginalExStyle);
+            Native.ShowWindow(h.Hwnd, Native.SW_SHOW);
+        }
+        _individual.Clear();
     }
 }
