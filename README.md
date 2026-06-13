@@ -20,7 +20,14 @@ shortcut — then bring them back the same way. A lightweight Windows tray utili
   bring it back.
 - **Restore all** — a tray command and a **panic hotkey** (default `Ctrl+Alt+`` `,
   configurable in Settings) un-hide everything. Windows are always restored on exit.
+- **Hide a specific window** — a "Hide a window…" picker lets you hide individual
+  windows instead of a whole app (e.g. just one Chrome profile window). You can even
+  **assign a temporary shortcut** to specific windows so a keypress toggles exactly
+  those — no need to open HideIt. **Show last hidden** (default `Ctrl+Alt+Shift+S`)
+  or Restore all bring them back.
 - **Run at Windows startup** — optional, via the per-user registry Run key.
+- **Desktop / Start Menu shortcuts** — create them on demand from the tray
+  ("Create shortcut") or Settings (handy for the portable `.exe`).
 - **Runs in the tray** — no taskbar clutter; settings live behind the tray icon. A
   first-run welcome panel walks you through the basics.
 

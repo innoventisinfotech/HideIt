@@ -3,6 +3,7 @@ using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HideIt.Models;
+using HideIt.Services;
 using HideIt.Views;
 
 namespace HideIt.ViewModels;
@@ -141,6 +142,19 @@ public partial class MainViewModel : ObservableObject
             StatusMessage = null;
         }
     }
+
+    // ---- Desktop / Start Menu shortcuts ----
+    [RelayCommand]
+    private void AddDesktopShortcut() =>
+        StatusMessage = ShortcutService.CreateDesktopShortcut()
+            ? "Desktop shortcut created."
+            : "Couldn't create the desktop shortcut (see %AppData%\\HideIt\\logs).";
+
+    [RelayCommand]
+    private void AddStartMenuShortcut() =>
+        StatusMessage = ShortcutService.CreateStartMenuShortcut()
+            ? "Start Menu shortcut created."
+            : "Couldn't create the Start Menu shortcut (see %AppData%\\HideIt\\logs).";
 
     private static Window? OwnerWindow() =>
         Application.Current?.Windows.OfType<MainWindow>().FirstOrDefault();

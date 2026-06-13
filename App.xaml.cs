@@ -109,6 +109,15 @@ public partial class App : Application
         };
         menu.Items.Add(_startupItem);
 
+        var shortcut = new WpfControls.MenuItem { Header = "Create shortcut" };
+        var scDesktop = new WpfControls.MenuItem { Header = "On Desktop" };
+        scDesktop.Click += (_, _) => MakeShortcut(desktop: true);
+        var scStart = new WpfControls.MenuItem { Header = "In Start Menu" };
+        scStart.Click += (_, _) => MakeShortcut(desktop: false);
+        shortcut.Items.Add(scDesktop);
+        shortcut.Items.Add(scStart);
+        menu.Items.Add(shortcut);
+
         menu.Items.Add(new WpfControls.Separator());
 
         var updates = new WpfControls.MenuItem { Header = "Check for updates" };
@@ -197,6 +206,19 @@ public partial class App : Application
             return;
         }
         HideTray();
+    }
+
+    private void MakeShortcut(bool desktop)
+    {
+        bool ok = desktop
+            ? ShortcutService.CreateDesktopShortcut()
+            : ShortcutService.CreateStartMenuShortcut();
+        string where = desktop ? "Desktop" : "Start Menu";
+        MessageBox.Show(
+            ok ? $"HideIt shortcut added to your {where}."
+               : $"Couldn't create the {where} shortcut. See %AppData%\\HideIt\\logs.",
+            "HideIt", MessageBoxButton.OK,
+            ok ? MessageBoxImage.Information : MessageBoxImage.Warning);
     }
 
     private static void OpenUrl(string url)

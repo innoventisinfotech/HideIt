@@ -64,6 +64,11 @@
                            Foreground="Gray" FontSize="11" TextWrapping="Wrap"
                            Text="Brings back the most recent window hidden via &quot;Hide a window…&quot;." />
             </Grid>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="Shortcuts:" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <Button Content="Add to Desktop" Padding="10,3" Command="{Binding AddDesktopShortcutCommand}" />
+                <Button Content="Add to Start Menu" Padding="10,3" Margin="8,0,0,0" Command="{Binding AddStartMenuShortcutCommand}" />
+            </StackPanel>
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
