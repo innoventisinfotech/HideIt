@@ -24,7 +24,8 @@ public sealed class StartupRegistry
         {
             var exe = Environment.ProcessPath;
             if (!string.IsNullOrEmpty(exe))
-                key.SetValue(ValueName, $"\"{exe}\"");
+                // Pass --startup so a login launch starts silently in the tray (no window).
+                key.SetValue(ValueName, $"\"{exe}\" {App.StartupArg}");
         }
         else if (key.GetValue(ValueName) != null)
         {

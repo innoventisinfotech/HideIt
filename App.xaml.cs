@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Windows;
 using System.Windows.Media.Imaging;
+using CommunityToolkit.Mvvm.Input;
 using H.NotifyIcon;
 using HideIt.Services;
 using HideIt.Views;
@@ -12,8 +13,14 @@ namespace HideIt;
 public partial class App : Application
 {
     private const string MutexName = "HideIt.SingleInstance.Mutex";
+    private const string ShowEventName = "HideIt.ShowSettings.Event";
+
+    /// <summary>Passed in the startup Run-key so a login launch starts silently in the tray.</summary>
+    public const string StartupArg = "--startup";
 
     private Mutex? _mutex;
+    private EventWaitHandle? _showEvent;
+    private RegisteredWaitHandle? _showWait;
     private AppController? _controller;
     private TaskbarIcon? _tray;
     private MainWindow? _mainWindow;
@@ -24,10 +31,16 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
-        // Single-instance: if we don't own the mutex, another HideIt already runs the tray.
+        // Single-instance: if we don't own the mutex, tell the running copy to show its
+        // window (so double-clicking the exe again pops Settings), then exit.
         _mutex = new Mutex(initiallyOwned: true, MutexName, out bool createdNew);
         if (!createdNew)
         {
+            if (EventWaitHandle.TryOpenExisting(ShowEventName, out var existing))
+            {
+                existing.Set();
+                existing.Dispose();
+            }
             Shutdown();
             return;
         }
@@ -42,12 +55,39 @@ public partial class App : Application
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>
             Logger.LogException("UnhandledException", args.ExceptionObject as Exception);
 
+        StartShowSettingsListener();
+
         _controller = new AppController();
         _controller.ToggleAppVisibilityRequested += ToggleTrayVisibility;
         _controller.Load();
 
         BuildTray();
-        MaybeShowOnboarding();
+
+        bool startedAtLogin = e.Args.Any(a => string.Equals(a, StartupArg, StringComparison.OrdinalIgnoreCase));
+
+        if (!_controller.Config.FirstRunComplete)
+        {
+            MaybeShowOnboarding();
+        }
+        else if (!startedAtLogin)
+        {
+            // A manual launch should open the window — defer until the message loop is
+            // pumping so the window reliably renders (showing during OnStartup can fail).
+            Dispatcher.BeginInvoke(new Action(ShowSettings),
+                System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+        }
+    }
+
+    /// <summary>Background listener: a second instance signals this to open Settings.</summary>
+    private void StartShowSettingsListener()
+    {
+        _showEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ShowEventName);
+        _showWait = ThreadPool.RegisterWaitForSingleObject(
+            _showEvent,
+            (_, _) => Dispatcher.BeginInvoke(new Action(ShowTray)),
+            state: null,
+            Timeout.Infinite,
+            executeOnlyOnce: false);
     }
 
     private void MaybeShowOnboarding()
@@ -129,7 +169,10 @@ public partial class App : Application
         menu.Items.Add(exit);
 
         _tray.ContextMenu = menu;
-        _tray.TrayMouseDoubleClick += (_, _) => ShowSettings();
+        // Open Settings on single OR double left-click (double-click event can be flaky).
+        var showCommand = new RelayCommand(ShowSettings);
+        _tray.LeftClickCommand = showCommand;
+        _tray.DoubleClickCommand = showCommand;
         _tray.ForceCreate(enablesEfficiencyMode: false);
     }
 
@@ -150,9 +193,12 @@ public partial class App : Application
         }
 
         _mainWindow.Show();
-        if (_mainWindow.WindowState == WindowState.Minimized)
-            _mainWindow.WindowState = WindowState.Normal;
+        _mainWindow.WindowState = WindowState.Normal;
         _mainWindow.Activate();
+        // Reliably bring it to the foreground from a background tray process.
+        _mainWindow.Topmost = true;
+        _mainWindow.Topmost = false;
+        _mainWindow.Focus();
 
         if (_startupItem != null)
             _startupItem.IsChecked = _controller!.Startup.IsEnabled();
@@ -249,6 +295,8 @@ public partial class App : Application
             _controller?.Dispose();
             _tray?.Dispose();
         }
+        _showWait?.Unregister(null);
+        _showEvent?.Dispose();
         try { _mutex?.ReleaseMutex(); } catch { /* not owned */ }
         _mutex?.Dispose();
         base.OnExit(e);

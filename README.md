@@ -63,7 +63,11 @@ If the hashes don't match, do not run the file — re-download it from the
 
 ### Usage
 
-1. **Double-click the tray icon** (or right-click → **Settings**).
+Launching HideIt opens the Settings window. When it's already running, click its
+tray icon (or just launch it again) to reopen Settings. Started automatically at
+Windows login, it stays quietly in the tray.
+
+1. **Click the tray icon** (or right-click → **Settings**).
 2. **Add app…** → pick a running app or **Browse for .exe**.
 3. Click **Set…** to record a shortcut (needs at least one of Ctrl/Alt/Shift/Win).
 4. Press your shortcut to hide/show. Give two apps the same shortcut to toggle both.

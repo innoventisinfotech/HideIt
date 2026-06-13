@@ -3,6 +3,18 @@
 All notable changes to HideIt are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.2] - 2026-06-13
+
+### Fixed
+- **Launching HideIt now opens the Settings window** instead of starting silently
+  into the tray with no visible window. A login auto-start (the "Run at Windows
+  startup" entry) still starts quietly — it now passes a `--startup` flag.
+- **Double-clicking the exe while HideIt is already running** now brings the
+  running copy's window to the front instead of the second copy exiting silently.
+- The **tray icon opens Settings on a single or double click** (the previous
+  double-click handler could be unreliable), and the window reliably comes to the
+  foreground.
+
 ## [1.0.1] - 2026-06-13
 
 ### Added
