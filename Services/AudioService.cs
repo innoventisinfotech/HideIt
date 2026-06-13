@@ -3,60 +3,94 @@ using NAudio.CoreAudioApi;
 namespace HideIt.Services;
 
 /// <summary>
-/// Mutes/unmutes a process's audio sessions (the per-app entry in the Volume Mixer).
-/// Reference-counted so overlapping hides of the same process stay balanced, and so we
-/// only ever unmute sessions we muted (never touch a session the user muted manually).
+/// Mutes/unmutes an app's audio sessions (the per-app entry in the Volume Mixer).
+///
+/// Apps like Chrome, Spotify and Discord play audio from a separate child process, so
+/// the audio session's process id differs from the window's. We therefore mute every
+/// session whose process is the window's process OR a descendant of it.
+///
+/// Sessions are reference-counted by their own process id so overlapping hides stay
+/// balanced, and we only ever unmute sessions we muted (never a manual user mute).
 /// </summary>
 public sealed class AudioService
 {
-    private readonly Dictionary<uint, int> _muted = new();
+    private readonly Dictionary<uint, int> _refCount = new();
     private readonly object _gate = new();
 
-    public void Mute(uint pid)
+    /// <summary>
+    /// Mute the audio sessions belonging to <paramref name="windowPid"/> or its descendants.
+    /// Returns the session process ids actually affected, for a later matching <see cref="Unmute"/>.
+    /// </summary>
+    public List<uint> Mute(uint windowPid)
     {
-        lock (_gate)
+        var tree = Native.GetProcessTreePids(windowPid);
+        var affected = new List<uint>();
+
+        ForEachSession(session =>
         {
-            if (_muted.TryGetValue(pid, out int count))
+            uint spid = session.GetProcessID;
+            if (!tree.Contains(spid)) return;
+
+            affected.Add(spid);
+            lock (_gate)
             {
-                _muted[pid] = count + 1;
-                return; // already muted by us
+                _refCount.TryGetValue(spid, out int count);
+                _refCount[spid] = count + 1;
+                if (count > 0) return; // already muted by us
             }
-            _muted[pid] = 1;
-        }
-        SetMute(pid, true);
+            session.SimpleAudioVolume.Mute = true;
+        });
+
+        return affected;
     }
 
-    public void Unmute(uint pid)
+    /// <summary>Unmute the session process ids returned by a previous <see cref="Mute"/>.</summary>
+    public void Unmute(IEnumerable<uint> sessionPids)
     {
-        bool unmuteNow = false;
+        var toUnmute = new HashSet<uint>();
         lock (_gate)
         {
-            if (!_muted.TryGetValue(pid, out int count)) return; // not ours — leave it alone
-            if (count <= 1)
+            foreach (var spid in sessionPids)
             {
-                _muted.Remove(pid);
-                unmuteNow = true;
-            }
-            else
-            {
-                _muted[pid] = count - 1;
+                if (!_refCount.TryGetValue(spid, out int count)) continue;
+                if (count <= 1)
+                {
+                    _refCount.Remove(spid);
+                    toUnmute.Add(spid);
+                }
+                else
+                {
+                    _refCount[spid] = count - 1;
+                }
             }
         }
-        if (unmuteNow) SetMute(pid, false);
+
+        if (toUnmute.Count > 0)
+            ApplyUnmute(toUnmute);
     }
 
+    /// <summary>Unmute everything we muted — belt-and-suspenders on exit / toggle-off / panic.</summary>
     public void UnmuteAll()
     {
-        List<uint> pids;
+        HashSet<uint> pids;
         lock (_gate)
         {
-            pids = _muted.Keys.ToList();
-            _muted.Clear();
+            pids = new HashSet<uint>(_refCount.Keys);
+            _refCount.Clear();
         }
-        foreach (var pid in pids) SetMute(pid, false);
+        if (pids.Count > 0)
+            ApplyUnmute(pids);
     }
 
-    private static void SetMute(uint pid, bool mute)
+    private void ApplyUnmute(HashSet<uint> sessionPids) =>
+        ForEachSession(session =>
+        {
+            if (sessionPids.Contains(session.GetProcessID))
+                session.SimpleAudioVolume.Mute = false;
+        });
+
+    /// <summary>Run an action over every active render session on every active output device.</summary>
+    private static void ForEachSession(Action<AudioSessionControl> action)
     {
         try
         {
@@ -68,16 +102,15 @@ public sealed class AudioService
                     var sessions = device.AudioSessionManager.Sessions;
                     for (int i = 0; i < sessions.Count; i++)
                     {
-                        var session = sessions[i];
-                        if (session.GetProcessID == pid)
-                            session.SimpleAudioVolume.Mute = mute;
+                        try { action(sessions[i]); }
+                        catch (Exception ex) { Logger.LogException("AudioSession action", ex); }
                     }
                 }
             }
         }
         catch (Exception ex)
         {
-            Logger.LogException($"SetMute pid={pid} mute={mute}", ex);
+            Logger.LogException("EnumerateAudioEndPoints", ex);
         }
     }
 }

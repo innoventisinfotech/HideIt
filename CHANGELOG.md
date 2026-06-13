@@ -3,6 +3,14 @@
 All notable changes to HideIt are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.1] - 2026-06-13
+
+### Fixed
+- **"Mute audio while hidden" now works for multi-process apps** (Chrome, Spotify,
+  Discord, browsers). They play audio from a separate child process, so matching the
+  window's process id alone muted nothing. HideIt now mutes every audio session in
+  the window's process tree (the process and its descendants).
+
 ## [1.1.0] - 2026-06-13
 
 ### Added

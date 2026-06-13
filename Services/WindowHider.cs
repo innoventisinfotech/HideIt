@@ -1,7 +1,11 @@
 namespace HideIt.Services;
 
 /// <summary>A window we hid: its handle, the extended style to restore, and its process id.</summary>
-public sealed record HiddenWin(IntPtr Hwnd, long OriginalExStyle, uint Pid);
+public sealed record HiddenWin(IntPtr Hwnd, long OriginalExStyle, uint Pid)
+{
+    /// <summary>Audio session pids we muted for this window (empty if muting was off).</summary>
+    public List<uint> MutedSessionPids { get; } = new();
+}
 
 /// <summary>
 /// Hides/shows all top-level windows of a process. Show() works off stored handles
@@ -37,11 +41,16 @@ public sealed class WindowHider
 
         if (on)
         {
-            foreach (var w in AllHidden()) _audio.Mute(w.Pid);
+            foreach (var w in AllHidden())
+            {
+                w.MutedSessionPids.Clear();
+                w.MutedSessionPids.AddRange(_audio.Mute(w.Pid));
+            }
         }
         else
         {
             _audio.UnmuteAll();
+            foreach (var w in AllHidden()) w.MutedSessionPids.Clear();
         }
     }
 
@@ -128,14 +137,17 @@ public sealed class WindowHider
         Native.ShowWindow(hwnd, Native.SW_HIDE);
 
         uint pid = Native.GetWindowPid(hwnd);
-        if (MuteWhileHidden) _audio.Mute(pid);
-        return new HiddenWin(hwnd, ex, pid);
+        var w = new HiddenWin(hwnd, ex, pid);
+        if (MuteWhileHidden)
+            w.MutedSessionPids.AddRange(_audio.Mute(pid));
+        return w;
     }
 
     private void Restore(HiddenWin w)
     {
         Native.SetExStyle(w.Hwnd, w.OriginalExStyle); // restore the exact original style
         Native.ShowWindow(w.Hwnd, Native.SW_SHOW);
-        _audio.Unmute(w.Pid); // no-op if we didn't mute it
+        if (w.MutedSessionPids.Count > 0)
+            _audio.Unmute(w.MutedSessionPids);
     }
 }

@@ -134,6 +134,84 @@ internal static class Native
         return pid;
     }
 
+    // ---- Process tree (Toolhelp snapshot) — used to find a window's audio child processes ----
+    private const uint TH32CS_SNAPPROCESS = 0x00000002;
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct PROCESSENTRY32
+    {
+        public uint dwSize;
+        public uint cntUsage;
+        public uint th32ProcessID;
+        public IntPtr th32DefaultHeapID;
+        public uint th32ModuleID;
+        public uint cntThreads;
+        public uint th32ParentProcessID;
+        public int pcPriClassBase;
+        public uint dwFlags;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+        public string szExeFile;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr CreateToolhelp32Snapshot(uint dwFlags, uint th32ProcessID);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool Process32First(IntPtr hSnapshot, ref PROCESSENTRY32 lppe);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool Process32Next(IntPtr hSnapshot, ref PROCESSENTRY32 lppe);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool CloseHandle(IntPtr hObject);
+
+    /// <summary>The given pid plus every descendant (child, grandchild, …) process id.</summary>
+    public static HashSet<uint> GetProcessTreePids(uint rootPid)
+    {
+        var result = new HashSet<uint> { rootPid };
+
+        // Snapshot all processes once, then build the parent->children relation.
+        var children = new Dictionary<uint, List<uint>>();
+        IntPtr snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        if (snapshot == IntPtr.Zero || snapshot == new IntPtr(-1))
+            return result;
+
+        try
+        {
+            var entry = new PROCESSENTRY32 { dwSize = (uint)Marshal.SizeOf<PROCESSENTRY32>() };
+            if (Process32First(snapshot, ref entry))
+            {
+                do
+                {
+                    if (!children.TryGetValue(entry.th32ParentProcessID, out var list))
+                        children[entry.th32ParentProcessID] = list = new List<uint>();
+                    list.Add(entry.th32ProcessID);
+                } while (Process32Next(snapshot, ref entry));
+            }
+        }
+        finally
+        {
+            CloseHandle(snapshot);
+        }
+
+        // Breadth-first walk down from the root, collecting descendants.
+        var queue = new Queue<uint>();
+        queue.Enqueue(rootPid);
+        while (queue.Count > 0)
+        {
+            var pid = queue.Dequeue();
+            if (children.TryGetValue(pid, out var kids))
+                foreach (var k in kids)
+                    if (result.Add(k))
+                        queue.Enqueue(k);
+        }
+
+        return result;
+    }
+
     public static string GetWindowTitle(IntPtr hWnd)
     {
         int len = GetWindowTextLength(hWnd);
