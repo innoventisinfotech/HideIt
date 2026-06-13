@@ -13,3 +13,6 @@ publish/
 # OS
 Thumbs.db
 desktop.ini
+
+# Internal build spec — kept local, not published
+HideIt-Implementation-Plan.md
