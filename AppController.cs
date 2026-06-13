@@ -35,6 +35,12 @@ public sealed class AppController : IDisposable
     /// <summary>Combos that failed to register in the last Reapply (already owned globally).</summary>
     private readonly HashSet<HotKeyCombo> _failedCombos = new();
 
+    /// <summary>
+    /// Session-only shortcuts bound to specific window handles (the "assign a shortcut to
+    /// this window" feature). Not persisted — handles don't survive a window close/restart.
+    /// </summary>
+    private readonly Dictionary<HotKeyCombo, List<IntPtr>> _tempWindowBindings = new();
+
     /// <summary>Raised (UI thread) when a hotkey couldn't be registered.</summary>
     public event Action<HotKeyCombo>? HotKeyRegistrationFailed;
 
@@ -78,6 +84,7 @@ public sealed class AppController : IDisposable
             combos = combos.Append(AppToggleCombo);
         if (ShowLastCombo != null)
             combos = combos.Append(ShowLastCombo);
+        combos = combos.Concat(_tempWindowBindings.Keys);
         HotKeys.RegisterAll(combos);
     }
 
@@ -94,6 +101,13 @@ public sealed class AppController : IDisposable
     // ---- Hotkey handling ----
     private void OnHotKeyPressed(HotKeyCombo combo)
     {
+        // A shortcut bound to one or more specific windows (group toggle on those windows).
+        if (_tempWindowBindings.TryGetValue(combo, out var hwnds))
+        {
+            ToggleSpecificWindows(combo, hwnds);
+            return;
+        }
+
         // Show/hide HideIt itself — unless the user also assigned it to an app.
         if (AppToggleCombo != null && combo.Equals(AppToggleCombo) && !IsAssignedToApp(combo))
         {
@@ -205,6 +219,36 @@ public sealed class AppController : IDisposable
     {
         foreach (var h in handles)
             Hider.HideWindow(h);
+    }
+
+    /// <summary>
+    /// Bind a session-only shortcut to specific windows. Returns false if the combo
+    /// could not be registered (already owned globally).
+    /// </summary>
+    public bool AddTempWindowBinding(HotKeyCombo combo, IReadOnlyList<IntPtr> handles)
+    {
+        _tempWindowBindings[combo] = handles.ToList();
+        Reapply();
+        return !_failedCombos.Contains(combo);
+    }
+
+    /// <summary>Group-toggle a set of specific windows; drops the binding once all have closed.</summary>
+    private void ToggleSpecificWindows(HotKeyCombo combo, List<IntPtr> handles)
+    {
+        var alive = handles.Where(Native.IsWindow).ToList();
+        if (alive.Count == 0)
+        {
+            _tempWindowBindings.Remove(combo);
+            Reapply();
+            return;
+        }
+
+        bool allHidden = alive.All(Hider.IsWindowHidden);
+        foreach (var h in alive)
+        {
+            if (allHidden) Hider.ShowSpecificWindow(h);
+            else Hider.HideWindow(h);
+        }
     }
 
     public void Dispose()

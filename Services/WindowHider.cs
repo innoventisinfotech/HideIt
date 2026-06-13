@@ -20,6 +20,20 @@ public sealed class WindowHider
 
     public bool HasIndividuallyHidden => _individual.Count > 0;
 
+    public bool IsWindowHidden(IntPtr hwnd) => _individual.Any(h => h.Hwnd == hwnd);
+
+    /// <summary>Restore one specific individually-hidden window and focus it.</summary>
+    public void ShowSpecificWindow(IntPtr hwnd)
+    {
+        int idx = _individual.FindIndex(h => h.Hwnd == hwnd);
+        if (idx < 0) return;
+        var h = _individual[idx];
+        _individual.RemoveAt(idx);
+        Native.SetExStyle(h.Hwnd, h.OriginalExStyle);
+        Native.ShowWindow(h.Hwnd, Native.SW_SHOW);
+        Native.SetForegroundWindow(h.Hwnd);
+    }
+
     /// <summary>Hide one specific window by handle (used by the window picker).</summary>
     public void HideWindow(IntPtr hwnd)
     {

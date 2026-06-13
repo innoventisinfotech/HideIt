@@ -14,7 +14,7 @@
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0" TextWrapping="Wrap" Margin="0,0,0,8"
-                   Text="Tick the exact windows to hide — handy when one app (e.g. Chrome) has several windows and you only want to hide some. Bring one back with the &quot;Show last hidden&quot; shortcut, or Restore all." />
+                   Text="Tick the exact windows you want — handy when one app (e.g. Chrome) has several windows and you only want some. Either hide them now, or assign a shortcut that toggles them until they close or HideIt restarts. Bring one back with the &quot;Show last hidden&quot; shortcut, or Restore all." />
 
         <ListBox Grid.Row="1" x:Name="List" HorizontalContentAlignment="Stretch">
             <ListBox.ItemTemplate>
@@ -36,6 +36,7 @@
                 Margin="0,8,0,0" Padding="10,4" Click="Refresh_Click" />
 
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="Assign shortcut…" Width="130" Margin="0,0,8,0" Click="Assign_Click" />
             <Button Content="Hide selected" Width="120" Margin="0,0,8,0" IsDefault="True" Click="Hide_Click" />
             <Button Content="Cancel" Width="80" IsCancel="True" />
         </StackPanel>

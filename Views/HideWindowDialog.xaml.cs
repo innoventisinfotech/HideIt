@@ -35,13 +35,15 @@ public partial class HideWindowDialog : Window
 
     private void Refresh_Click(object sender, RoutedEventArgs e) => Reload();
 
-    private void Hide_Click(object sender, RoutedEventArgs e)
-    {
-        Result = (List.ItemsSource as IEnumerable<Row>)!
+    private List<IntPtr> CheckedHandles() =>
+        (List.ItemsSource as IEnumerable<Row>)!
             .Where(r => r.IsChecked)
             .Select(r => r.Win.Hwnd)
             .ToList();
 
+    private void Hide_Click(object sender, RoutedEventArgs e)
+    {
+        Result = CheckedHandles();
         if (Result.Count == 0)
         {
             MessageBox.Show(this, "Tick at least one window to hide.",
@@ -49,5 +51,36 @@ public partial class HideWindowDialog : Window
             return;
         }
         DialogResult = true;
+    }
+
+    private void Assign_Click(object sender, RoutedEventArgs e)
+    {
+        var handles = CheckedHandles();
+        if (handles.Count == 0)
+        {
+            MessageBox.Show(this, "Tick the window(s) you want the shortcut to toggle.",
+                "Assign shortcut", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var capture = new HotKeyCaptureDialog { Owner = this };
+        if (capture.ShowDialog() != true || capture.Result == null)
+            return; // cancelled or cleared
+
+        bool ok = _controller.AddTempWindowBinding(capture.Result, handles);
+        if (ok)
+        {
+            MessageBox.Show(this,
+                $"{capture.Result.Display()} will now hide/show the selected window(s).\n\n" +
+                "This is temporary — it lasts until those windows close or HideIt restarts.",
+                "Shortcut assigned", MessageBoxButton.OK, MessageBoxImage.Information);
+            DialogResult = false; // closes the dialog; nothing for the caller to hide
+        }
+        else
+        {
+            MessageBox.Show(this,
+                $"{capture.Result.Display()} is already in use by another app and couldn't be registered. Try a different combination.",
+                "Shortcut in use", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
 }
