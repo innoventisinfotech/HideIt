@@ -38,9 +38,18 @@ jobs:
           name: HideIt
           path: publish/HideIt.exe
 
+      - name: Generate SHA256SUMS
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          $h = (Get-FileHash publish/HideIt.exe -Algorithm SHA256).Hash.ToLower()
+          "$h  HideIt.exe" | Out-File publish/SHA256SUMS.txt -Encoding ascii -NoNewline
+
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: publish/HideIt.exe
+          files: |
+            publish/HideIt.exe
+            publish/SHA256SUMS.txt
           generate_release_notes: true
