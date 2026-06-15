@@ -9,12 +9,12 @@ shortcut — then bring them back the same way. A lightweight Windows tray utili
 
 ## Demo
 
-<video src="https://github.com/innoventisinfotech/HideIt/releases/download/v1.1.2/hideit-demo.mp4" controls muted width="720">
+<video src="https://pub-0acffcd7de9442b795cf24e626c3e448.r2.dev/LQ156M1JW09%202026-06-15%2011-03-30.mp4" controls muted width="720">
   Your browser can't play this video —
-  <a href="https://github.com/innoventisinfotech/HideIt/releases/download/v1.1.2/hideit-demo.mp4">watch the demo</a> instead.
+  <a href="https://pub-0acffcd7de9442b795cf24e626c3e448.r2.dev/LQ156M1JW09%202026-06-15%2011-03-30.mp4">watch the demo</a> instead.
 </video>
 
-▶️ [Watch the demo video](https://github.com/innoventisinfotech/HideIt/releases/download/v1.1.2/hideit-demo.mp4)
+▶️ [Watch the demo video](https://pub-0acffcd7de9442b795cf24e626c3e448.r2.dev/LQ156M1JW09%202026-06-15%2011-03-30.mp4)
 
 ## Features
 
