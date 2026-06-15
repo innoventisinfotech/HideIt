@@ -9,16 +9,21 @@ on:
 permissions:
   contents: write
 
+# Run JS actions on Node 24. Covers softprops/action-gh-release@v2, whose v2 tag
+# still ships a Node 20 runtime (Node 20 is removed from runners 2026-09-16).
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup .NET 10
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
 
@@ -33,7 +38,7 @@ jobs:
           -o publish
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: HideIt
           path: publish/HideIt.exe
