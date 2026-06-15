@@ -16,6 +16,10 @@ public partial class HideWindowDialog : Window
         public string Title => Win.Title;
         public string ProcessName => Win.ProcessName;
         public ImageSource? Icon => Win.Icon;
+
+        /// <summary>Session shortcut already bound to this window (e.g. "Ctrl+Alt+C"), or "".</summary>
+        public string Shortcut { get; init; } = "";
+        public bool HasShortcut => Shortcut.Length > 0;
     }
 
     private readonly AppController _controller;
@@ -31,7 +35,13 @@ public partial class HideWindowDialog : Window
     }
 
     private void Reload() =>
-        List.ItemsSource = _controller.GetOpenWindows().Select(w => new Row { Win = w }).ToList();
+        List.ItemsSource = _controller.GetOpenWindows()
+            .Select(w => new Row
+            {
+                Win = w,
+                Shortcut = _controller.GetTempBindingFor(w.Hwnd)?.Display() ?? "",
+            })
+            .ToList();
 
     private void Refresh_Click(object sender, RoutedEventArgs e) => Reload();
 
@@ -61,6 +71,24 @@ public partial class HideWindowDialog : Window
             MessageBox.Show(this, "Tick the window(s) you want the shortcut to toggle.",
                 "Assign shortcut", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
+        }
+
+        // Warn if any chosen window already has a shortcut — assigning replaces it.
+        var existing = handles
+            .Select(_controller.GetTempBindingFor)
+            .Where(c => c != null)
+            .Select(c => c!.Display())
+            .Distinct()
+            .ToList();
+        if (existing.Count > 0)
+        {
+            var current = string.Join(", ", existing);
+            var answer = MessageBox.Show(this,
+                $"The selected window(s) already have a shortcut assigned: {current}.\n\n" +
+                "Do you want to change it to a new one?",
+                "Shortcut already assigned", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (answer != MessageBoxResult.Yes)
+                return;
         }
 
         var capture = new HotKeyCaptureDialog { Owner = this };

@@ -232,13 +232,32 @@ public sealed class AppController : IDisposable
 
     /// <summary>
     /// Bind a session-only shortcut to specific windows. Returns false if the combo
-    /// could not be registered (already owned globally).
+    /// could not be registered (already owned globally). Any earlier shortcut on these
+    /// same windows is dropped first, so a window only ever has one temp shortcut.
     /// </summary>
     public bool AddTempWindowBinding(HotKeyCombo combo, IReadOnlyList<IntPtr> handles)
     {
+        foreach (var h in handles)
+            RemoveTempBindingFor(h);
+
         _tempWindowBindings[combo] = handles.ToList();
         Reapply();
         return !_failedCombos.Contains(combo);
+    }
+
+    /// <summary>The session shortcut currently bound to this window, or null if none.</summary>
+    public HotKeyCombo? GetTempBindingFor(IntPtr hwnd) =>
+        _tempWindowBindings.FirstOrDefault(kv => kv.Value.Contains(hwnd)).Key;
+
+    /// <summary>Drop <paramref name="hwnd"/> from any temp binding; remove combos left empty.</summary>
+    private void RemoveTempBindingFor(IntPtr hwnd)
+    {
+        foreach (var combo in _tempWindowBindings.Keys.ToList())
+        {
+            var list = _tempWindowBindings[combo];
+            if (list.Remove(hwnd) && list.Count == 0)
+                _tempWindowBindings.Remove(combo);
+        }
     }
 
     /// <summary>Group-toggle a set of specific windows; drops the binding once all have closed.</summary>

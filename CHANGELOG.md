@@ -3,6 +3,16 @@
 All notable changes to HideIt are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.2] - 2026-06-15
+
+### Fixed
+- **The "Hide a window…" picker now shows a window's existing session shortcut.**
+  Previously a window that already had a temporary shortcut looked unassigned, so
+  the picker always offered to assign a fresh one. Each window with a shortcut now
+  shows it as a badge (e.g. `Ctrl+Alt+C`), and **Assign shortcut…** asks for
+  confirmation before replacing an existing one. A window only ever keeps one
+  temporary shortcut.
+
 ## [1.1.1] - 2026-06-13
 
 ### Fixed

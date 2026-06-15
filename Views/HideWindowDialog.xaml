@@ -5,6 +5,9 @@
         Width="520" Height="560"
         WindowStartupLocation="CenterOwner"
         ShowInTaskbar="False">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </Window.Resources>
     <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -23,9 +26,15 @@
                         <StackPanel Orientation="Horizontal" Margin="4,0,0,0">
                             <Image Source="{Binding Icon}" Width="20" Height="20" Margin="0,0,8,0" />
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" MaxWidth="400" />
+                                <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" MaxWidth="320" />
                                 <TextBlock Text="{Binding ProcessName}" Foreground="Gray" FontSize="11" />
                             </StackPanel>
+                            <Border Visibility="{Binding HasShortcut, Converter={StaticResource BoolToVis}}"
+                                    Background="#E3F2FD" CornerRadius="3" Padding="6,1"
+                                    Margin="10,0,0,0" VerticalAlignment="Center"
+                                    ToolTip="This window already has a session shortcut. Re-assigning replaces it.">
+                                <TextBlock Text="{Binding Shortcut}" FontSize="11" Foreground="#1565C0" />
+                            </Border>
                         </StackPanel>
                     </CheckBox>
                 </DataTemplate>
